@@ -27,12 +27,13 @@ use version::NativeVersion;
 // A few exports that help ease life for downstream crates.
 #[cfg(any(feature = "std", test))]
 pub use runtime_primitives::BuildStorage;
-pub use consensus::Call as ConsensusCall;
+//pub use consensus::Call as ConsensusCall;
 pub use timestamp::Call as TimestampCall;
 pub use balances::Call as BalancesCall;
 pub use runtime_primitives::{Permill, Perbill};
 pub use timestamp::BlockPeriod;
 pub use support::{StorageValue, construct_runtime};
+pub use contract::Call as ContractCall;
 
 /// The type that is used for identifying authorities.
 pub type AuthorityId = <AuthoritySignature as Verify>::Signer;
@@ -58,6 +59,7 @@ pub type Nonce = u64;
 /// Used for the module template in `./template.rs`
 mod demo;
 mod template;
+mod kitties;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -93,8 +95,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("demo"),
-	impl_name: create_runtime_str!("demo-node"),
+	spec_name: create_runtime_str!("xnode"),
+	impl_name: create_runtime_str!("xnode"),
 	authoring_version: 3,
 	spec_version: 4,
 	impl_version: 4,
@@ -171,7 +173,7 @@ impl balances::Trait for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = u128;
 	/// What to do if an account's free balance gets zeroed.
-	type OnFreeBalanceZero = ();
+	type OnFreeBalanceZero = (Contract);
 	/// What to do if a new account is created.
 	type OnNewAccount = Indices;
 	/// The uniquitous event type.
@@ -189,6 +191,17 @@ impl sudo::Trait for Runtime {
 }
 
 impl demo::Trait for Runtime {}      // Add
+impl kitties::Trait for Runtime { type Event = Event;}
+impl contract::Trait for Runtime {
+	type Currency = Balances;
+	type Call = Call;
+	type Event = Event;
+	type Gas = u64;
+	type DetermineContractAddress = contract::SimpleAddressDeterminator<Runtime>;
+	type ComputeDispatchFee = contract::DefaultDispatchFeeComputor<Runtime>;
+	type TrieIdGenerator = contract::TrieIdFromParentCounter<Runtime>;
+	type GasPayment = ();
+}
 
 /// Used for the module template in `./template.rs`
 impl template::Trait for Runtime {
@@ -209,8 +222,10 @@ construct_runtime!(
 		Balances: balances,
 		Sudo: sudo,
 		Demo: demo::{Module, Call, Storage},    // Add this line
+		Kitties: kitties::{Module, Call, Storage, Event<T>}, // bruce: Add this line
 		// Used for the module template in `./template.rs`
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		Contract: contract::{Module, Call, Storage, Event<T>, Config<T>},
 	}
 );
 
@@ -302,4 +317,5 @@ impl_runtime_apis! {
 			Consensus::authorities()
 		}
 	}
+
 }
