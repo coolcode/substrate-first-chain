@@ -98,8 +98,8 @@ version = '3.5'
 default_features = false
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-primitives'
-tag = 'v1.0'
-# rev = '2e30b7321df0cc4dba525cfcf18df8438e12b830'
+# tag = 'v1.0'
+rev = '2e30b7321df0cc4dba525cfcf18df8438e12b830'
 
 [dependencies.rstd]
 default_features = false
